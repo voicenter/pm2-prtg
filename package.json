@@ -1,0 +1,19 @@
+{
+  "name": "pm2-prtg",
+  "version": "1.0.0",
+  "description": "System to monitor pm2 processes",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon ."
+  },
+  "keywords": [],
+  "author": "Serhii Mamedov",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^2.0.3"
+  },
+  "dependencies": {
+    "@pm2/io": "^4.3.3",
+    "dotenv": "^8.2.0"
+  }
+}
