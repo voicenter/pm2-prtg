@@ -9,11 +9,9 @@
   "keywords": [],
   "author": "Serhii Mamedov",
   "license": "ISC",
-  "devDependencies": {
-    "nodemon": "^2.0.3"
-  },
+  "devDependencies": {},
   "dependencies": {
     "@pm2/io": "^4.3.3",
-    "dotenv": "^8.2.0"
+    "pm2": "^4.2.3"
   }
 }
