@@ -5,12 +5,10 @@ let lastTimeChecked = Date.now();
 
 const getProcesses = () => {
   return new Promise((resolve, reject) => {
-    pm2.connect(err1 => {
-      if (err1) reject(err1);
-      pm2.list((err2, resp) => {
-        if (err2) reject(err2);
-        resolve(resp);
-      })
+    pm2.list((err, resp) => {
+      if (err) reject(err);
+      pm2.disconnect();
+      resolve(resp);
     })
   })
 }
