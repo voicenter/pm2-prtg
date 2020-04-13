@@ -1,5 +1,5 @@
 {
-  "name": "@voicenter/pm2-prtg",
+  "name": "pm2-prtg",
   "version": "1.0.0",
   "description": "System to monitor pm2 processes for prtg",
   "main": "index.js",
