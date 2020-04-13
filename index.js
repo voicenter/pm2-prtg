@@ -1,3 +1,10 @@
+/**
+ * @typedef Config
+ * @type {object}
+ * @property {Array<string>} [counters] - optional Array of counter names
+ * @property {Object} [fields] - optional Object of field names.
+ */
+
 const pm2 = require('pm2');
 const io = require('@pm2/io');
 
@@ -36,24 +43,79 @@ const getSanitizedProсessData = prs => {
   return obj;
 }
 
-const successCounter = io.counter({ name: 'successCounter' });
-const errorCounter = io.counter({ name: 'errorCounter' });
-
 /**
- * provide id (as number) or name (as string) of process
- * @param {number | string} id_or_name
+ * @param {number | string} idOrName - provide id (as number) or name (as string) of process
+ * @param {Config} [config] - configuration of handler
  */
-module.exports = async id_or_name => {
-  const process = await getProcess(id_or_name);
+module.exports = async (idOrName, config = {}) => {
+  const process = await getProcess(idOrName);
   if (!process) throw new Error('no such pm2 process found!');
-  return {
+  const processHandler = {
     data: process,
-    sanitizedData: getSanitizedProсessData(process),
-    successCounter,
-    errorCounter,
+    fields: {},
+    counters: {
+      successCounter: io.counter({ name: 'successCounter' }),
+      errorCounter: io.counter({ name: 'errorCounter' })
+    },
+    setField(name, val) {
+      this.fields[name] = val;
+    },
+    getField(name) {
+      if (this.fields[name] === undefined) throw new Error('field doesn\'t exist!');
+      return this.fields[name]
+    },
+    incrementCounter(name) {
+      if (!this.counters[name]) throw new Error('counter doesn\'n exist!');
+      this.counters[name].inc();
+    },
+    getCounterValue(name) {
+      if (!this.counters[name]) throw new Error('counter doesn\'n exist!');
+      return this.counters[name].val();
+    },
+    addCounter(name) {
+      this.counters[name] = io.counter({ name });
+    },
+    listAllCounters() {
+      const obj = {}
+      Object.entries(this.counters).forEach(e => {
+        const [key, val] = e;
+        obj[key] = val.val();
+      });
+      return obj;
+    },
+    getSanitizedData() {
+      let data = getSanitizedProсessData(process);
+      data = { data, ...this.fields, ...this.listAllCounters() }
+
+      return data;
+    },
     async update() {
-      this.data = await getProcess(this.sanitizedData.id);
-      this.sanitizedData = getSanitizedProсessData(this.data);
+      this.data = await getProcess(this.data.pm_id)
+    },
+    getPrtgObject() {
+      let result = [];
+      Object.entries(this.getSanitizedData()).forEach(el => {
+        const [channel, value] = el;
+        result.push({ channel, value })
+      });
+      return {
+        prtg: {
+          result
+        }
+      }
     }
   }
+
+  const { counters } = config;
+  if (counters && Array.isArray(counters) && counters.length > 0) {
+    counters.forEach(e => {
+      if (typeof e === 'string') processHandler.addCounter(e);
+    })
+  }
+
+  const { fields } = config;
+  if (fields && typeof fields === 'object' && !Array.isArray(fields))
+    processHandler.fields = fields;
+
+  return processHandler;
 }
