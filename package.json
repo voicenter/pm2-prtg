@@ -1,6 +1,6 @@
 {
   "name": "pm2-prtg",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "System to monitor pm2 processes for prtg",
   "main": "index.js",
   "keywords": [],
