@@ -1,15 +1,11 @@
 {
-  "name": "pm2-prtg",
+  "name": "@voicenter/pm2-prtg",
   "version": "1.0.0",
-  "description": "System to monitor pm2 processes",
+  "description": "System to monitor pm2 processes for prtg",
   "main": "index.js",
-  "scripts": {
-    "start": "nodemon ."
-  },
   "keywords": [],
   "author": "Serhii Mamedov",
   "license": "ISC",
-  "devDependencies": {},
   "dependencies": {
     "@pm2/io": "^4.3.3",
     "pm2": "^4.2.3"
