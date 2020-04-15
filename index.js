@@ -79,7 +79,7 @@ module.exports = async (idOrName, config = {}) => {
     },
     getSanitizedData() {
       let data = getSanitizedProсessData(process);
-      data = { data, ...this.fields, ...this.listAllCounters() }
+      data = { ...data, ...this.fields, ...this.listAllCounters() }
 
       return data;
     },
