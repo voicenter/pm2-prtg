@@ -19,3 +19,6 @@
 </ul>
 <h2>Defaults</h2>
 <p>The package has 2 default counters: <code>successCounter</code> and <code>errorCounter</code></p>
+<h2>Other</h2>
+<p>When you import package you have access to jsdoc types like <code>PM2_PRTG_HANDLER</code> and <code>Config</code><br>
+You can also import them separately by <code>require('pm2-prtg/types')</code></p>

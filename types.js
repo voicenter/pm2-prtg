@@ -1,4 +1,6 @@
 class PM2_PRTG_HANDLER {
+  /**@type {Object} */
+  fields
   /**@param {string} name 
    * @param {any} val
   */
