@@ -2,8 +2,6 @@ require('./types');
 const pm2 = require('pm2');
 const io = require('@pm2/io');
 
-let lastTimeChecked = Date.now();
-
 const getProcesses = () => {
   return new Promise((resolve, reject) => {
     pm2.list((err, resp) => {
@@ -24,19 +22,6 @@ const getProcess = async id_or_name => {
   }
 }
 
-const getSanitizedProсessData = prs => {
-  const obj = {
-    id: prs.pm_id,
-    name: prs.name,
-    pid: prs.pid,
-    created_at: prs.pm2_env.created_at,
-    uptime: Date.now() - prs.pm2_env.created_at,
-    last_time_checked: ~~((Date.now() - lastTimeChecked) / 1000)
-  }
-  lastTimeChecked = Date.now();
-  return obj;
-}
-
 /**
  * @param {number | string} idOrName - provide id (as number) or name (as string) of process
  * @param {Config} [config] - configuration of handler
@@ -45,6 +30,19 @@ module.exports = async (idOrName, config = {}) => {
   const process = await getProcess(idOrName);
   if (!process) throw new Error('no such pm2 process found!');
   const processHandler = {
+    lastTimeChecked: Date.now(),
+    getSanitizedProсessData(prs) {
+      const obj = {
+        id: prs.pm_id,
+        name: prs.name,
+        pid: prs.pid,
+        created_at: prs.pm2_env.created_at,
+        uptime: Date.now() - prs.pm2_env.created_at,
+        last_time_checked: ~~((Date.now() - this.lastTimeChecked) / 1000)
+      }
+      this.lastTimeChecked = Date.now();
+      return obj;
+    },
     data: process,
     fields: {},
     counters: {
@@ -78,7 +76,7 @@ module.exports = async (idOrName, config = {}) => {
       return obj;
     },
     getSanitizedData() {
-      let data = getSanitizedProсessData(process);
+      let data = this.getSanitizedProсessData(process);
       data = { ...data, ...this.fields, ...this.listAllCounters() }
 
       return data;
