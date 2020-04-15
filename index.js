@@ -1,10 +1,4 @@
-/**
- * @typedef Config
- * @type {object}
- * @property {Array<string>} [counters] - optional Array of counter names
- * @property {Object} [fields] - optional Object of field names.
- */
-
+require('./types');
 const pm2 = require('pm2');
 const io = require('@pm2/io');
 
