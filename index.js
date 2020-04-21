@@ -46,47 +46,60 @@ module.exports = async (idOrName, config = {}) => {
     data: process,
     fields: {},
     counters: {
-      successCounter: io.counter({ name: 'successCounter' }),
-      errorCounter: io.counter({ name: 'errorCounter' })
+      successCounter: { value: io.counter({ name: 'successCounter' }), group: 'general' },
+      errorCounter: { value: io.counter({ name: 'errorCounter' }), group: 'general' }
     },
-    setField(name, val) {
-      this.fields[name] = val;
+    setField(name, value, group = null) {
+      this.fields[name] = { value };
+      if (group) this.fields[name].group = group;
     },
     getField(name) {
       if (this.fields[name] === undefined) throw new Error('field doesn\'t exist!');
-      return this.fields[name]
+      return this.fields[name].value;
     },
     incrementCounter(name) {
-      if (!this.counters[name]) throw new Error('counter doesn\'n exist!');
-      this.counters[name].inc();
+      if (!this.counters[name]) throw new Error('counter doesn\'t exist!');
+      this.counters[name].value.inc();
     },
     getCounterValue(name) {
-      if (!this.counters[name]) throw new Error('counter doesn\'n exist!');
-      return this.counters[name].val();
+      if (!this.counters[name]) throw new Error('counter doesn\'t exist!');
+      return this.counters[name].value.val();
     },
-    addCounter(name) {
-      this.counters[name] = io.counter({ name });
+    addCounter(name, group = null) {
+      this.counters[name] = { value: io.counter({ name }) }
+      if (group) this.counters[name].group = group;
     },
-    listAllCounters() {
+    listAllCounters(group = null) {
       const obj = {}
       Object.entries(this.counters).forEach(e => {
         const [key, val] = e;
-        obj[key] = val.val();
+        if (group && group !== val.group) return;
+        obj[key] = val.value.val();
       });
       return obj;
     },
-    getSanitizedData() {
-      let data = this.getSanitizedProсessData(process);
-      data = { ...data, ...this.fields, ...this.listAllCounters() }
+    listAllFields(group = null) {
+      const obj = {}
+      Object.entries(this.fields).forEach(e => {
+        const [key, val] = e;
+        if (group && group !== val.group) return;
+        obj[key] = val.value;
+      });
+      return obj;
+    },
+    getSanitizedData(group = null) {
+      let data; 
+      if (!group || group.toLocaleLowerCase() === 'general') data = this.getSanitizedProсessData(process);
+      data = { ...data, ...this.listAllFields(group), ...this.listAllCounters(group) }
 
       return data;
     },
     async update() {
       this.data = await getProcess(this.data.pm_id)
     },
-    getPrtgObject() {
+    getPrtgObject(group = null) {
       let result = [];
-      Object.entries(this.getSanitizedData()).forEach(el => {
+      Object.entries(this.getSanitizedData(group)).forEach(el => {
         const [channel, value] = el;
         result.push({ channel, value })
       });
@@ -99,15 +112,17 @@ module.exports = async (idOrName, config = {}) => {
   }
 
   const { counters } = config;
-  if (counters && Array.isArray(counters) && counters.length > 0) {
+  if (counters && Array.isArray(counters))
     counters.forEach(e => {
       if (typeof e === 'string') processHandler.addCounter(e);
-    })
-  }
+      else if (typeof e === 'object' && e.name) processHandler.addCounter(e.name, e.group);
+    });
 
   const { fields } = config;
-  if (fields && typeof fields === 'object' && !Array.isArray(fields))
-    processHandler.fields = fields;
+  if (fields && Array.isArray(fields))
+    fields.forEach(e => {
+      if (e.value) processHandler.setField(e.name, e.value, e.group);
+    });
 
   return processHandler;
 }
