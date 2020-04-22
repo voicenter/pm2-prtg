@@ -112,8 +112,7 @@ module.exports = async (idOrName, config = {}) => {
       Object.entries(this.histograms).forEach(e => {
         const [key, val] = e;
         if (group && group !== val.group) return;
-        obj[key] = val.value.val()
-        console.log(obj[key])
+        obj[key] = val.value.val();
       });
       return obj;
     },
@@ -136,7 +135,6 @@ module.exports = async (idOrName, config = {}) => {
       let result = [];
       Object.entries(this.getSanitizedData(group)).forEach(el => {
         const [channel, value] = el;
-        console.log(value)
         result.push({ channel, value })
       });
       return {
