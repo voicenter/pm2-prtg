@@ -49,6 +49,26 @@ module.exports = async (idOrName, config = {}) => {
       successCounter: { value: io.counter({ name: 'successCounter' }), group: 'general' },
       errorCounter: { value: io.counter({ name: 'errorCounter' }), group: 'general' }
     },
+    histograms: {},
+    time_stamps: {},
+    startTimer(name) {
+      this.time_stamps[name] = Date.now();
+    },
+    getTimerValue(name) {
+      const val = Date.now() - this.time_stamps[name];
+      delete this.time_stamps[name];
+      return val;
+    },
+    getHistogram(name) {
+      return this.histograms[name].value.val();
+    },
+    addHistogram(name, group) {
+      this.histograms[name] = { value: io.histogram({ name }) };
+      if (group) this.histograms[name].group = group;
+    },
+    updateHistogram(name, value) {
+      this.histograms[name].value.update(value);
+    },
     setField(name, value, group = null) {
       this.fields[name] = { value };
       if (group) this.fields[name].group = group;
@@ -70,7 +90,7 @@ module.exports = async (idOrName, config = {}) => {
       if (group) this.counters[name].group = group;
     },
     listAllCounters(group = null) {
-      const obj = {}
+      const obj = {};
       Object.entries(this.counters).forEach(e => {
         const [key, val] = e;
         if (group && group !== val.group) return;
@@ -79,7 +99,7 @@ module.exports = async (idOrName, config = {}) => {
       return obj;
     },
     listAllFields(group = null) {
-      const obj = {}
+      const obj = {};
       Object.entries(this.fields).forEach(e => {
         const [key, val] = e;
         if (group && group !== val.group) return;
@@ -87,10 +107,25 @@ module.exports = async (idOrName, config = {}) => {
       });
       return obj;
     },
+    listAllHistograms(group = null) {
+      const obj = {};
+      Object.entries(this.histograms).forEach(e => {
+        const [key, val] = e;
+        if (group && group !== val.group) return;
+        obj[key] = val.value.val()
+        console.log(obj[key])
+      });
+      return obj;
+    },
     getSanitizedData(group = null) {
-      let data; 
+      let data;
       if (!group || group.toLocaleLowerCase() === 'general') data = this.getSanitizedProсessData(process);
-      data = { ...data, ...this.listAllFields(group), ...this.listAllCounters(group) }
+      data = {
+        ...data,
+        ...this.listAllFields(group),
+        ...this.listAllCounters(group),
+        ...this.listAllHistograms(group)
+      }
 
       return data;
     },
@@ -101,6 +136,7 @@ module.exports = async (idOrName, config = {}) => {
       let result = [];
       Object.entries(this.getSanitizedData(group)).forEach(el => {
         const [channel, value] = el;
+        console.log(value)
         result.push({ channel, value })
       });
       return {
@@ -111,17 +147,22 @@ module.exports = async (idOrName, config = {}) => {
     }
   }
 
-  const { counters } = config;
-  if (counters && Array.isArray(counters))
+  const { counters, fields, histogrms } = config;
+
+  if (Array.isArray(counters))
     counters.forEach(e => {
       if (typeof e === 'string') processHandler.addCounter(e);
       else if (typeof e === 'object' && e.name) processHandler.addCounter(e.name, e.group);
     });
 
-  const { fields } = config;
-  if (fields && Array.isArray(fields))
+  if (Array.isArray(fields))
     fields.forEach(e => {
       if (e.value) processHandler.setField(e.name, e.value, e.group);
+    });
+
+  if (Array.isArray(histogrms))
+    histogrms.forEach(e => {
+      if (e.name) processHandler.addHistogram(e.name, e.group);
     });
 
   return processHandler;
