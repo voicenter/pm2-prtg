@@ -34,7 +34,6 @@ module.exports = async (idOrName, config = {}) => {
     getSanitizedProсessData(prs) {
       const obj = {
         id: prs.pm_id,
-        name: prs.name,
         pid: prs.pid,
         created_at: prs.pm2_env.created_at,
         uptime: Date.now() - prs.pm2_env.created_at,
