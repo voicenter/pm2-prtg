@@ -1,7 +1,7 @@
 const io = require('@pm2/io');
 const { getProcess } = require('../helpers/pm2Helpers');
-
-module.exports = class PM2_PRTG_HANDLER {
+const { resolveKey } = require('../util/unitResolver');
+class PM2_PRTG_HANDLER {
   constructor(_process) {
     this.lastTimeChecked = Date.now();
     this.getSanitizedProсessData = prs => {
@@ -18,8 +18,16 @@ module.exports = class PM2_PRTG_HANDLER {
     this.data = _process;
     this.fields = {};
     this.counters = {
-      successCounter: { value: io.counter({ name: 'successCounter' }), group: 'general' },
-      errorCounter: { value: io.counter({ name: 'errorCounter' }), group: 'general' }
+      successCounter: {
+        value: io.counter({ name: 'successCounter' }),
+        group: 'general',
+        unit: 'count'
+      },
+      errorCounter: {
+        value: io.counter({ name: 'errorCounter' }),
+        group: 'general',
+        unit: 'count'
+      }
     };
     this.histograms = {};
     this.time_stamps = {};
@@ -30,29 +38,38 @@ module.exports = class PM2_PRTG_HANDLER {
       return val;
     };
     this.getHistogram = name => this.histograms[name].value.val();
-    this.addHistogram = (name, group) => {
+    this.addHistogram = (name, group, unit) => {
       this.histograms[name] = { value: io.histogram({ name }) };
       if (group) this.histograms[name].group = group;
+      if (unit) {
+        const unitKey = resolveKey(unit);
+        this.histograms[name].value[unitKey] = unit;
+      }
     };
     this.updateHistogram = (name, value) => this.histograms[name].value.update(value);
-    this.setField = (name, value, group = null) => {
+    this.setField = (name, value, group = null, unit) => {
       this.fields[name] = { value };
       if (group) this.fields[name].group = group;
+      if (unit) {
+        const unitKey = resolveKey(unit);
+        this.fields[name][unitKey] = unit;
+      }
     };
     this.getField = name => {
       if (this.fields[name] === undefined) throw new Error('field doesn\'t exist!');
       return this.fields[name].value;
-    },
-      this.incrementCounter = name => {
-        if (!this.counters[name]) throw new Error('counter doesn\'t exist!');
-        this.counters[name].value.inc();
-      };
+    };
+    this.incrementCounter = name => {
+      if (!this.counters[name]) throw new Error('counter doesn\'t exist!');
+      this.counters[name].value.inc();
+    };
     this.getCounterValue = name => {
       if (!this.counters[name]) throw new Error('counter doesn\'t exist!');
       return this.counters[name].value.val();
     };
     this.addCounter = (name, group = null) => {
       this.counters[name] = { value: io.counter({ name }) }
+      this.counters[name].value.unit = 'count';
       if (group) this.counters[name].group = group;
     };
     this.listAllCounters = (group = null) => {
@@ -60,25 +77,33 @@ module.exports = class PM2_PRTG_HANDLER {
       Object.entries(this.counters).forEach(e => {
         const [key, val] = e;
         if (group && group !== val.group) return;
-        obj[key] = val.value.val();
+        obj[key] = val;
       });
       return obj;
-    },
-      this.listAllFields = (group = null) => {
-        const obj = {};
-        Object.entries(this.fields).forEach(e => {
-          const [key, val] = e;
-          if (group && group !== val.group) return;
+    };
+    this.listAllFields = (group = null) => {
+      const obj = {};
+      Object.entries(this.fields).forEach(e => {
+        const [key, val] = e;
+        if (group && group !== val.group) return;
+        if (typeof val === 'object') {
+          obj[key] = {
+            value: val.value,
+            unit: val.unit,
+            customunit: val.customunit
+          };
+        } else {
           obj[key] = val.value;
-        });
-        return obj;
-      };
+        }
+      });
+      return obj;
+    };
     this.listAllHistograms = (group = null) => {
       const obj = {};
       Object.entries(this.histograms).forEach(e => {
         const [key, val] = e;
         if (group && group !== val.group) return;
-        obj[key] = val.value.val();
+        obj[key] = val.value;
       });
       return obj;
     };
@@ -98,9 +123,19 @@ module.exports = class PM2_PRTG_HANDLER {
     this.getPrtgObject = (group = null) => {
       let result = [];
       Object.entries(this.getSanitizedData(group)).forEach(el => {
-        const [channel, value] = el;
-        result.push({ channel, value })
+        const [channel, val] = el;
+        const value = typeof val !== 'object' ? val :
+          (!!val.val ? val.val() : void 0) !== void 0 ?
+            val.val() : typeof val.value === 'object' ?
+              val.value.val() : val.value;
+        const item = { channel, value };
+        const unit = typeof val === 'object' ? val.unit : null;
+        const customunit = typeof val === 'object' ? val.customunit : null;
+        if (unit) item.unit = unit;
+        else if (customunit) item.customunit = customunit;
+        result.push(item);
       });
+      result = JSON.parse(JSON.stringify(result));
       return {
         prtg: {
           result
@@ -109,3 +144,7 @@ module.exports = class PM2_PRTG_HANDLER {
     };
   }
 }
+
+/**@typedef {PM2_PRTG_HANDLER} PM2_PRTG_HANDLER*/
+
+module.exports = PM2_PRTG_HANDLER;

@@ -21,12 +21,12 @@ module.exports = async (idOrName, config = {}) => {
 
   if (Array.isArray(fields))
     fields.forEach(e => {
-      if (e.value) processHandler.setField(e.name, e.value, e.group);
+      if (e.value) processHandler.setField(e.name, e.value, e.group, e.unit);
     });
 
   if (Array.isArray(histogrms))
     histogrms.forEach(e => {
-      if (e.name) processHandler.addHistogram(e.name, e.group);
+      if (e.name) processHandler.addHistogram(e.name, e.group, e.unit);
     });
 
   return processHandler;
