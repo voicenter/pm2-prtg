@@ -5,7 +5,7 @@ const PM2_PRTG_HANDLER_class = require('./classes/PM2_PRTG_HANDLER.js');
  * @type {PM2_PRTG_HANDLER_class}
  */
 
-/**@type {PM2_PRTG_HANDLER} */ const PM2_PRTG_HANDLER_type;
+/**@type {PM2_PRTG_HANDLER} */ let PM2_PRTG_HANDLER_type;
 
 module.exports = {
   PM2_PRTG_HANDLER_type
