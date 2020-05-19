@@ -1,5 +1,7 @@
+// @ts-check
+const { PM2_PRTG_HANDLER_type } = require('./types.js');
 const { getProcess } = require('./helpers/pm2Helpers');
-const PM2_PRTG_HANDLER = require('./classes/PM2_PRTG_HANDLER');
+const PM2_PRTG_HANDLER = require('./classes/PM2_PRTG_HANDLER.js');
 
 /**
  * @typedef Config
@@ -9,10 +11,10 @@ const PM2_PRTG_HANDLER = require('./classes/PM2_PRTG_HANDLER');
  * @property {Array<{name: string, group: string, unit: string}>} [histogrms] - optional Array of histograms
  */
 
-
 /**
  * @param {number | string} idOrName - provide id (as number) or name (as string) of process
  * @param {Config} [config] - configuration of handler
+ * @returns {Promise<PM2_PRTG_HANDLER_type>}
  */
 module.exports = async (idOrName, config = {}) => {
   const _process = await getProcess(idOrName);
