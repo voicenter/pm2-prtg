@@ -1,6 +1,14 @@
-require('./types');
 const { getProcess } = require('./helpers/pm2Helpers');
 const PM2_PRTG_HANDLER = require('./classes/PM2_PRTG_HANDLER');
+
+/**
+ * @typedef Config
+ * @type {object}
+ * @property {Array<{name: string, group: string}>} [counters] - optional Array of counter names
+ * @property {Array<{name: string, value: any, group: string, unit: string}>} [fields] - optional Array of field names.
+ * @property {Array<{name: string, group: string, unit: string}>} [histogrms] - optional Array of histograms
+ */
+
 
 /**
  * @param {number | string} idOrName - provide id (as number) or name (as string) of process
