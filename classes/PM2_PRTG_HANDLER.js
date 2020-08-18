@@ -135,7 +135,7 @@ class PM2_PRTG_HANDLER {
         else if (customunit) item.customunit = customunit;
         result.push(item);
       });
-      result = result.map(el => ({...el, value: Math.floor(el.value) }));
+      result = result.map(el => ({ ...el, value: Math.floor(+el.value || 0) }));
       return {
         prtg: {
           result
