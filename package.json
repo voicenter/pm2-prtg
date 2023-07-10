@@ -7,7 +7,7 @@
   "author": "Serhii Mamedov",
   "license": "ISC",
   "dependencies": {
-    "@pm2/io": "^4.3.3"
+    "@pm2/io": "^5.0.0"
   },
   "repository": {
     "type": "git",
